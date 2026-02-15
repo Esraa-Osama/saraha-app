@@ -1,0 +1,23 @@
+//~ Assignment 9 ~//
+
+import crypto from "crypto";
+import dotenv from "dotenv";
+dotenv.config();
+
+// Asymmetric encryption
+const publicKey = process.env.ASYMMETRIC_PUBLIC_KEY.replace(/\\n/g, "\n");
+export function AsymmetricEncrypt(originalText) {
+  const encrypted = crypto.publicEncrypt(publicKey, Buffer.from(originalText));
+  return encrypted.toString("hex");
+}
+
+// symmetric encryption
+const symmetricKey = Buffer.from(process.env.SYMMETRIC_KEY, "hex");
+const IV_LENGTH = 16;
+export function symmetricEncrypt(text) {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv("aes-256-cbc", symmetricKey, iv);
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return iv.toString("hex") + ":" + encrypted;
+}
