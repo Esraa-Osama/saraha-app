@@ -1,14 +1,13 @@
 //~ Assignment 9 ~//
 
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-dotenv.config();
+import { EMAIL_PASS, EMAIL_USER } from "../../../config/config.service.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
 });
 
@@ -18,7 +17,7 @@ export const generateOTP = () => {
 
 export const sendOTP = async ({ email, otp } = {}) => {
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: EMAIL_USER,
     to: email,
     subject: "Sara7a OTP",
     text: `Your OTP is: ${otp}`,

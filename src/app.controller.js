@@ -4,12 +4,15 @@ import express from "express";
 import { checkConnection } from "./DB/dbConnection.js";
 import userRouter from "./modules/users/user.controller.js";
 import { successResponse } from "./common/utils/response.success.js";
+import cors from "cors";
+import { PORT } from "../config/config.service.js";
+
 const app = express();
-const port = 5000;
+const port = PORT;
 
 const bootstrap = () => {
   checkConnection();
-  app.use(express.json());
+  app.use(cors(), express.json());
 
   app.get("/", (req, res, next) => {
     successResponse({ res, message: "WELCOME TO MY APP...." });

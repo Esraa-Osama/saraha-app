@@ -1,7 +1,11 @@
 //~ Assignment 9 ~//
 
 import mongoose from "mongoose";
-import { genderEnum, providerEnum } from "../../common/enums/user.enum.js";
+import {
+  genderEnum,
+  providerEnum,
+  roleEnum,
+} from "../../common/enums/user.enum.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,7 +31,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider == providerEnum.google ? false : true;
+      },
       minLength: 6,
       trim: true,
     },
@@ -35,11 +41,15 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: Object.values(genderEnum),
-      default: genderEnum.male,
+      required: function () {
+        return this.provider == providerEnum.google ? false : true;
+      },
     },
     phone: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider == providerEnum.google ? false : true;
+      },
     },
     profilePicture: String,
     confirmed: Boolean,
@@ -50,6 +60,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(providerEnum),
       default: providerEnum.system,
+    },
+    role: {
+      type: String,
+      enum: Object.values(roleEnum),
+      default: roleEnum.user,
     },
   },
   {

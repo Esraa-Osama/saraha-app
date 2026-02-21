@@ -7,14 +7,21 @@ import { successResponse } from "../../common/utils/response.success.js";
 import { AsymmetricEncrypt } from "../../common/security/encrypt.security.js";
 import { AsymmetricDecrypt } from "../../common/security/decrypt.security.js";
 import { applyHash, compareHash } from "../../common/security/hash.security.js";
-import dotenv from "dotenv";
 import { generateToken } from "../../common/services/token.service.js";
 import { generateOTP, sendOTP } from "../../common/services/OTP.service.js";
-dotenv.config();
+import { OAuth2Client } from "google-auth-library";
+import {
+  CLIENT_ID,
+  EXPIRES_IN,
+  JWT_SECRET_KEY,
+  OTP_EXPIRE,
+  SALT_ROUNDS,
+} from "../../../config/config.service.js";
 
 export const signup = async (req, res, next) => {
   const { userName, email, password, confirmPassword, age, gender, phone } =
     req.body;
+
   if (userName.split(" ").length < 2) {
     throw new Error("username must consist of two names", { cause: 400 });
   }
@@ -34,14 +41,14 @@ export const signup = async (req, res, next) => {
       email,
       password: applyHash({
         originalText: password,
-        saltRounds: process.env.SALT_ROUNDS,
+        saltRounds: SALT_ROUNDS,
       }),
       age,
       gender,
       phone: AsymmetricEncrypt(phone),
       isVerified: false,
       OTP: otp,
-      OTPExpiryDate: Date.now() + Number(process.env.OTP_EXPIRE) * 60 * 1000,
+      OTPExpiryDate: Date.now() + OTP_EXPIRE * 60 * 1000,
     },
   });
 
@@ -72,8 +79,8 @@ export const signin = async (req, res, next) => {
 
   const access_token = generateToken({
     payload: { id: user._id },
-    secret_key: process.env.JWT_SECRET_KEY,
-    options: { expiresIn: Number(process.env.EXPIRES_IN) },
+    secret_key: JWT_SECRET_KEY,
+    options: { expiresIn: EXPIRES_IN },
   });
   successResponse({
     res,
@@ -130,8 +137,45 @@ export const resendOTP = async (req, res, next) => {
   const otp = generateOTP();
   user.isVerified = false;
   user.OTP = otp;
-  user.OTPExpiryDate = Date.now() + Number(process.env.OTP_EXPIRE) * 60 * 1000;
+  user.OTPExpiryDate = Date.now() + OTP_EXPIRE * 60 * 1000;
   await user.save();
   await sendOTP({ email, otp });
   successResponse({ res, message: "OTP sent to your gmail" });
+};
+export const signupAndSignInWithGmail = async (req, res, next) => {
+  const { idToken } = req.body;
+  const client = new OAuth2Client();
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const { name, email, email_verified, picture } = payload;
+  let user = await db_service.findOne({ model: userModel, filter: { email } });
+  if (!user) {
+    user = await db_service.create({
+      model: userModel,
+      data: {
+        userName: name,
+        email,
+        confirmed: email_verified,
+        profilePicture: picture,
+        provider: providerEnum.google,
+      },
+    });
+  }
+
+  if (user.provider == providerEnum.system) {
+    throw new Error("sorry, you can sign in using system only", { cause: 400 });
+  }
+
+  const access_token = generateToken({
+    payload: { id: user._id, email: user.email },
+    secret_key: JWT_SECRET_KEY,
+    options: { expiresIn: EXPIRES_IN },
+  });
+  successResponse({
+    res,
+    data: { access_token },
+  });
 };

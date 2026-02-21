@@ -1,10 +1,11 @@
 //~ Assignment 9 ~//
 
 import mongoose from "mongoose";
+import { DB_CONNECTION_LINK } from "../../config/config.service.js";
 
 export const checkConnection = () => {
   mongoose
-    .connect("mongodb://127.0.0.1:27017/sara7aApp_Assignment9", {
+    .connect(DB_CONNECTION_LINK, {
       serverSelectionTimeoutMS: 5000,
     })
     .then(() => {

@@ -4,6 +4,7 @@ import { verifyToken } from "../services/token.service.js";
 import * as db_service from "../../DB/db.service.js";
 import userModel from "../../DB/models/user.model.js";
 import { Types } from "mongoose";
+import { JWT_SECRET_KEY } from "../../../config/config.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -17,7 +18,7 @@ export const authentication = async (req, res, next) => {
 
   const decoded = verifyToken({
     token,
-    secret_key: process.env.JWT_SECRET_KEY,
+    secret_key: JWT_SECRET_KEY,
   });
   if (!decoded || !decoded?.id) {
     throw new Error("invalid token", { cause: 401 });

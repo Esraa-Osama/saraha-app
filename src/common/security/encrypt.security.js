@@ -1,18 +1,20 @@
 //~ Assignment 9 ~//
 
 import crypto from "crypto";
-import dotenv from "dotenv";
-dotenv.config();
+import {
+  ASYMMETRIC_PUBLIC_KEY,
+  SYMMETRIC_KEY,
+} from "../../../config/config.service.js";
 
 // Asymmetric encryption
-const publicKey = process.env.ASYMMETRIC_PUBLIC_KEY.replace(/\\n/g, "\n");
+const publicKey = ASYMMETRIC_PUBLIC_KEY.replace(/\\n/g, "\n");
 export function AsymmetricEncrypt(originalText) {
   const encrypted = crypto.publicEncrypt(publicKey, Buffer.from(originalText));
   return encrypted.toString("hex");
 }
 
 // symmetric encryption
-const symmetricKey = Buffer.from(process.env.SYMMETRIC_KEY, "hex");
+const symmetricKey = Buffer.from(SYMMETRIC_KEY, "hex");
 const IV_LENGTH = 16;
 export function symmetricEncrypt(text) {
   const iv = crypto.randomBytes(IV_LENGTH);
