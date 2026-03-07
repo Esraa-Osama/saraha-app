@@ -1,5 +1,5 @@
 {
-  "name": "assignment10",
+  "name": "assignment11",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
@@ -20,6 +21,7 @@
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.1"
   }
 }

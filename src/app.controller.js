@@ -1,4 +1,4 @@
-//~ Assignment 9 ~//
+//~ Assignment 11 ~//
 
 import express from "express";
 import { checkConnection } from "./DB/dbConnection.js";
@@ -13,6 +13,7 @@ const port = PORT;
 const bootstrap = () => {
   checkConnection();
   app.use(cors(), express.json());
+  app.use("/uploads", express.static("uploads"));
 
   app.get("/", (req, res, next) => {
     successResponse({ res, message: "WELCOME TO MY APP...." });

@@ -1,10 +1,13 @@
-//~ Assignment 9 ~//
+//~ Assignment 11 ~//
 
 import { verifyToken } from "../services/token.service.js";
 import * as db_service from "../../DB/db.service.js";
 import userModel from "../../DB/models/user.model.js";
 import { Types } from "mongoose";
-import { JWT_SECRET_KEY } from "../../../config/config.service.js";
+import {
+  JWT_ACCESS_SECRET_KEY,
+  PREFIX,
+} from "../../../config/config.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -12,13 +15,13 @@ export const authentication = async (req, res, next) => {
     throw new Error("token required, please login", { cause: 401 });
   }
   const [prefix, token] = authorization.split(" ");
-  if (prefix !== "bearer") {
+  if (prefix !== PREFIX) {
     throw new Error("invalid prefix", { cause: 401 });
   }
 
   const decoded = verifyToken({
     token,
-    secret_key: JWT_SECRET_KEY,
+    secret_key: JWT_ACCESS_SECRET_KEY,
   });
   if (!decoded || !decoded?.id) {
     throw new Error("invalid token", { cause: 401 });

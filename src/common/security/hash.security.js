@@ -1,4 +1,4 @@
-//~ Assignment 9 ~//
+//~ Assignment 11 ~//
 
 import bcrypt from "bcrypt";
 import { SALT_ROUNDS } from "../../../config/config.service.js";

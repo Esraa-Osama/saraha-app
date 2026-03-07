@@ -1,4 +1,4 @@
-//~ Assignment 9 ~//
+//~ Assignment 11 ~//
 
 import mongoose from "mongoose";
 import {
@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema(
       },
     },
     profilePicture: String,
+    coverPictures: [String],
     confirmed: Boolean,
     isVerified: Boolean,
     OTP: String,
