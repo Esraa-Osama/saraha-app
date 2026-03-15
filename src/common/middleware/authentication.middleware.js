@@ -1,4 +1,4 @@
-//~ Assignment 11 ~//
+//~ Assignment 12 ~//
 
 import { verifyToken } from "../services/token.service.js";
 import * as db_service from "../../DB/db.service.js";
@@ -8,6 +8,7 @@ import {
   JWT_ACCESS_SECRET_KEY,
   PREFIX,
 } from "../../../config/config.service.js";
+import { get, revokedKey } from "../../DB/redis/redis.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -35,6 +36,18 @@ export const authentication = async (req, res, next) => {
     throw new Error("user not found", { cause: 404 });
   }
 
+  if (user?.changeCredential?.getTime() > decoded.iat * 1000) {
+    throw new Error("invalid token", { cause: 404 });
+  }
+
+  let revokeToken = await get(
+    revokedKey({ userId: user._id, jti: decoded.jti }),
+  );
+  if (revokeToken) {
+    throw new Error("token is already revoked", { cause: 404 });
+  }
+
   req.user = user;
+  req.decoded = decoded;
   next();
 };

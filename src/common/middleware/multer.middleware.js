@@ -1,4 +1,4 @@
-//~ Assignment 11 ~//
+//~ Assignment 12 ~//
 
 import multer from "multer";
 import fs from "node:fs";
@@ -37,7 +37,6 @@ export const multerHost = (filesTypes = []) => {
     }
     cb(null, true);
   }
-
   const upload = multer({ storage, fileFilter });
   return upload;
 };

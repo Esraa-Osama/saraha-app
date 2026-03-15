@@ -1,4 +1,4 @@
-//~ Assignment 11 ~//
+//~ Assignment 12 ~//
 
 export const create = async ({ model, data } = {}) => {
   return await model.create(data);
@@ -82,4 +82,8 @@ export const findOneAndUpdate = async ({
 
 export const deleteOne = ({ model, filter = {} } = {}) => {
   return model.deleteOne(filter);
+};
+
+export const deleteMany = ({ model, filter = {} } = {}) => {
+  return model.deleteMany(filter);
 };

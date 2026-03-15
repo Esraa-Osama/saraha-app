@@ -1,4 +1,4 @@
-//~ Assignment 11 ~//
+//~ Assignment 12 ~//
 
 import mongoose from "mongoose";
 import { DB_CONNECTION_LINK } from "../../config/config.service.js";

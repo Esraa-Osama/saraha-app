@@ -1,4 +1,4 @@
-//~ Assignment 11 ~//
+//~ Assignment 12 ~//
 
 import { Router } from "express";
 import {
@@ -13,6 +13,8 @@ import {
   updateProfilePicture,
   updateProfile,
   updatePassword,
+  logout,
+  deleteProfilePicture,
 } from "./user.service.js";
 import { authentication } from "../../common/middleware/authentication.middleware.js";
 import { authorization } from "../../common/middleware/authorization.middleware.js";
@@ -57,6 +59,12 @@ userRouter.patch(
   updateProfilePicture,
 );
 
+userRouter.delete(
+  "/deleteProfilePicture",
+  authentication,
+  deleteProfilePicture,
+);
+
 userRouter.post("/otpVerification", otpVerification);
 
 userRouter.post("/resendOTP", resendOTP);
@@ -93,5 +101,7 @@ userRouter.patch(
   validation(updatePasswordSchema),
   updatePassword,
 );
+
+userRouter.post("/logout", authentication, logout);
 
 export default userRouter;
