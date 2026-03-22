@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 import { redisClient } from "./redis.db.js";
 
@@ -86,4 +86,32 @@ export const getKey = (userId) => {
 
 export const getProfileKey = (userId) => {
   return `profile::${userId}`;
+};
+
+export const otpKey = (email) => {
+  return `otp:${email}`;
+};
+
+export const maxOtpKey = (email) => {
+  return `otp:${email}::max-tries`;
+};
+
+export const blockOtpKey = (email) => {
+  return `otp:${email}::block`;
+};
+
+export const incr = async (key) => {
+  try {
+    return await redisClient.incr(key);
+  } catch (error) {
+    console.log("error to increment key in redis", error);
+  }
+};
+
+export const banKey = (email) => {
+  return `ban::${email}`;
+};
+
+export const maxPasswordTries = (email) => {
+  return `max-password-tries::${email}`;
 };

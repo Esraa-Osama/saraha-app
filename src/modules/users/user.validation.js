@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 import joi from "joi";
 import { genderEnum } from "../../common/enums/user.enum.js";
@@ -96,7 +96,7 @@ export const signUpSchema = {
     })
     .required()
     .messages({
-      "any.required": "files is required",
+      "any.required": "files are required",
     }),
 };
 
@@ -135,6 +135,33 @@ export const updateProfilePictureSchema = {
     }),
 };
 
+export const updateCoverPicturesSchema = {
+  files: joi
+    .array()
+    .max(2)
+    .items(
+      joi
+        .object({
+          fieldname: joi.string().required(),
+          originalname: joi.string().required(),
+          encoding: joi.string().required(),
+          mimetype: joi.string().required(),
+          destination: joi.string().required(),
+          filename: joi.string().required(),
+          path: joi.string().required(),
+          size: joi.number().required(),
+        })
+        .required()
+        .messages({
+          "any.required": "coverPictures are required",
+        }),
+    )
+    .required()
+    .messages({
+      "any.required": "files are required",
+    }),
+};
+
 export const shareProfileSchema = {
   params: joi
     .object({
@@ -167,6 +194,43 @@ export const updatePasswordSchema = {
       oldPassword: joi.string().min(20).max(40).required(),
       newPassword: joi.string().min(20).max(40).required(),
       confirmPassword: joi.string().min(10).valid(joi.ref("newPassword")),
+    })
+    .required()
+    .messages({
+      "any.required": "body must not be empty",
+    }),
+};
+
+export const forgotPasswordSchema = {
+  body: joi
+    .object({
+      email: joi.string().required(),
+    })
+    .required()
+    .messages({
+      "any.required": "body must not be empty",
+    }),
+};
+
+export const resetPasswordSchema = {
+  body: joi
+    .object({
+      code: joi.string().length(6).required(),
+      email: joi.string().required(),
+      newPassword: joi.string().min(20).max(40).required(),
+      confirmPassword: joi.string().min(10).valid(joi.ref("newPassword")),
+    })
+    .required()
+    .messages({
+      "any.required": "body must not be empty",
+    }),
+};
+
+export const confirmEmailSchema = {
+  body: joi
+    .object({
+      email: joi.string().required(),
+      otp: joi.string().length(6).required(),
     })
     .required()
     .messages({

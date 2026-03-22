@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 import express from "express";
 import { checkConnection } from "./DB/dbConnection.js";
@@ -36,7 +36,7 @@ const bootstrap = async () => {
     if (req.files?.profilePicture?.length > 0) {
       fs.unlinkSync(resolve(req.files.profilePicture[0].path));
     }
-    if (req.files?.coverPictures.length > 0) {
+    if (req.files?.coverPictures?.length > 0) {
       for (const file of req.files.coverPictures) {
         fs.unlinkSync(resolve(file.path));
       }

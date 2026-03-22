@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 import { Router } from "express";
 import {
@@ -15,15 +15,24 @@ import {
   updatePassword,
   logout,
   deleteProfilePicture,
+  updateCoverPictures,
+  profileVisitCount,
+  forgotPassword,
+  resetPassword,
+  resendOTPResetPassword,
 } from "./user.service.js";
 import { authentication } from "../../common/middleware/authentication.middleware.js";
 import { authorization } from "../../common/middleware/authorization.middleware.js";
 import { roleEnum } from "../../common/enums/user.enum.js";
 import { validation } from "../../common/middleware/validation.middleware.js";
 import {
+  confirmEmailSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   shareProfileSchema,
   signInSchema,
   signUpSchema,
+  updateCoverPicturesSchema,
   updatePasswordSchema,
   updateProfilePictureSchema,
   updateProfileSchema,
@@ -59,13 +68,25 @@ userRouter.patch(
   updateProfilePicture,
 );
 
+userRouter.patch(
+  "/updateCoverPictures",
+  authentication,
+  multerHost(multerEnum.image).array("coverPictures"),
+  validation(updateCoverPicturesSchema),
+  updateCoverPictures,
+);
+
 userRouter.delete(
   "/deleteProfilePicture",
   authentication,
   deleteProfilePicture,
 );
 
-userRouter.post("/otpVerification", otpVerification);
+userRouter.post(
+  "/otpVerification",
+  validation(confirmEmailSchema),
+  otpVerification,
+);
 
 userRouter.post("/resendOTP", resendOTP);
 
@@ -98,10 +119,32 @@ userRouter.patch(
 userRouter.patch(
   "/updatePassword",
   authentication,
+  authorization([roleEnum.user]),
   validation(updatePasswordSchema),
   updatePassword,
 );
 
+userRouter.post(
+  "/forgotPassword",
+  validation(forgotPasswordSchema),
+  forgotPassword,
+);
+
+userRouter.post(
+  "/resetPassword",
+  validation(resetPasswordSchema),
+  resetPassword,
+);
+
+userRouter.post("/resendOTPResetPassword", resendOTPResetPassword);
+
 userRouter.post("/logout", authentication, logout);
+
+userRouter.get(
+  "/profileVisitCount",
+  authentication,
+  authorization(roleEnum.admin),
+  profileVisitCount,
+);
 
 export default userRouter;

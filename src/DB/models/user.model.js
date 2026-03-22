@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 import mongoose from "mongoose";
 import {
@@ -51,14 +51,18 @@ const userSchema = new mongoose.Schema(
         return this.provider == providerEnum.google ? false : true;
       },
     },
-    profilePicture: String,
-    coverPictures: [String],
-    gallery: [String],
+    profilePicture: { public_id: String, secure_url: String },
+    coverPictures: [{ public_id: String, secure_url: String }],
+    gallery: [{ public_id: String, secure_url: String }],
     changeCredential: Date,
     confirmed: Boolean,
     isVerified: Boolean,
     OTP: String,
     OTPExpiryDate: Date,
+    otpMax: Number,
+    OTPMaxExpiryDate: Date,
+    blockOtp: Number,
+    blockOtpExpiryDate: Date,
     provider: {
       type: String,
       enum: Object.values(providerEnum),
@@ -68,6 +72,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(roleEnum),
       default: roleEnum.user,
+    },
+    visitCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

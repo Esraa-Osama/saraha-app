@@ -1,4 +1,4 @@
-//~ Assignment 12 ~//
+//~ Assignment 13 ~//
 
 export const create = async ({ model, data } = {}) => {
   return await model.create(data);
