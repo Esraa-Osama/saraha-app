@@ -1,16 +1,19 @@
-//~ Assignment 13 ~//
+//~ Assignment 14 ~//
 
 import express from "express";
 import { checkConnection } from "./DB/dbConnection.js";
 import userRouter from "./modules/users/user.controller.js";
 import { successResponse } from "./common/utils/response.success.js";
 import cors from "cors";
-import { PORT } from "../config/config.service.js";
+import { PORT, WHITE_LIST } from "../config/config.service.js";
 import { redisConnection } from "./DB/redis/redis.db.js";
 import { set } from "./DB/redis/redis.service.js";
 import fs from "node:fs";
 import { resolve } from "node:path";
 import cloudinary from "./common/utils/cloudinary.js";
+import messageRouter from "./modules/messages/message.controller.js";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const port = PORT;
@@ -19,7 +22,24 @@ const bootstrap = async () => {
   checkConnection();
   redisConnection();
 
-  app.use(cors(), express.json());
+  const limiter = rateLimit({
+    windowMs: 60 * 5 * 1000,
+    limit: 5,
+    legacyHeaders: false,
+  });
+
+  const whiteList = [...WHITE_LIST, undefined];
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (whiteList.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("you are not allowed by CORS"));
+      }
+    },
+  };
+
+  app.use(cors(corsOptions), helmet(), limiter, express.json());
   app.use("/uploads", express.static("uploads"));
 
   app.get("/", (req, res, next) => {
@@ -27,6 +47,7 @@ const bootstrap = async () => {
   });
 
   app.use("/users", userRouter);
+  app.use("/messages", messageRouter);
 
   app.use("{/*demo}", (req, res, next) => {
     throw new Error(`404 page ${req.originalUrl} not found`, { cause: 404 });

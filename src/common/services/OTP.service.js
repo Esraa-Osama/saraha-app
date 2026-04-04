@@ -1,7 +1,8 @@
-//~ Assignment 13 ~//
+//~ Assignment 14 ~//
 
 import nodemailer from "nodemailer";
 import { EMAIL_PASS, EMAIL_USER } from "../../../config/config.service.js";
+import { emailTemplate } from "../templates/email.template.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -20,6 +21,6 @@ export const sendOTP = async ({ email, otp } = {}) => {
     from: EMAIL_USER,
     to: email,
     subject: "Sara7a OTP",
-    text: `Your OTP is: ${otp}`,
+    html: emailTemplate(otp),
   });
 };

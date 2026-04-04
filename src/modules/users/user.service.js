@@ -1,4 +1,4 @@
-//~ Assignment 13 ~//
+//~ Assignment 14 ~//
 
 import { providerEnum } from "../../common/enums/user.enum.js";
 import userModel from "../../DB/models/user.model.js";
@@ -45,6 +45,8 @@ import {
   update,
 } from "../../DB/redis/redis.service.js";
 import { resolve } from "node:path";
+import { event } from "../../common/services/event.service.js";
+import { emailEnum } from "../../common/enums/email.enum.js";
 
 export const signup = async (req, res, next) => {
   const { userName, email, password, confirmPassword, age, gender, phone } =
@@ -92,7 +94,10 @@ export const signup = async (req, res, next) => {
     },
   });
 
-  await sendOTP({ email, otp });
+  event.emit(emailEnum.confirmEmail, async () => {
+    await sendOTP({ email, otp });
+  });
+
   await set({ key: maxPasswordTries(email), value: 1 });
   await set({ key: maxOtpKey(email), value: 0 });
   successResponse({ res, message: "OTP sent to your gmail" });
@@ -266,7 +271,7 @@ export const otpVerification = async (req, res, next) => {
     throw new Error("user not found", { cause: 404 });
   }
   if (!user.OTP || !user.OTPExpiryDate) {
-    throw new Error("OTP expiredd", { cause: 400 });
+    throw new Error("OTP expired", { cause: 400 });
   }
   if (user.OTPExpiryDate < Date.now()) {
     user.isVerified = false;
@@ -329,12 +334,15 @@ export const resendOTP = async (req, res, next) => {
   }
 
   const otp = generateOTP();
-  user.isVerified = false;
-  user.OTP = otp;
-  user.OTPExpiryDate = Date.now() + OTP_EXPIRE * 60 * 1000;
-  user.otpMax += 1;
-  await user.save();
-  await sendOTP({ email, otp });
+  event.emit(emailEnum.confirmEmail, async () => {
+    user.isVerified = false;
+    user.OTP = applyHash({ originalText: `${otp}` });
+    user.OTPExpiryDate = Date.now() + OTP_EXPIRE * 60 * 1000;
+    user.otpMax += 1;
+    await user.save();
+    await sendOTP({ email, otp });
+  });
+
   successResponse({ res, message: "OTP sent to your gmail" });
 };
 
@@ -486,6 +494,7 @@ export const updatePassword = async (req, res, next) => {
     filter: { _id: new Types.ObjectId(req.user._id) },
     updates: {
       password: applyHash({ originalText: newPassword, saltRounds: 12 }),
+      changeCredential: new Date(),
     },
   });
 
@@ -499,62 +508,19 @@ export const updatePassword = async (req, res, next) => {
 export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
 
-  if ((await ttl(otpKey(email))) > 0) {
-    throw new Error(
-      `can't send otp before ${await ttl(otpKey(email))} seconds`,
-    );
-  }
-
-  const user = db_service.findOne({ model: userModel, filter: { email } });
-  if (!user) {
-    throw new Error("user not found", { cause: 404 });
-  }
-  const otp = generateOTP();
-  await sendOTP({ email, otp });
-  await set({
-    key: otpKey(email),
-    value: applyHash({ originalText: otp }),
-    ttl: 60 * 2,
-  });
-
-  successResponse({ res, message: "otp sent to your email" });
-};
-
-export const resetPassword = async (req, res, next) => {
-  const { code, email, newPassword } = req.body;
-
-  if (!((await ttl(otpKey(email))) > 0)) {
-    throw new Error("otp expired", { cause: 400 });
-  }
-
-  const user = db_service.findOne({ model: userModel, filter: { email } });
-  if (!user) {
-    throw new Error("user not found", { cause: 404 });
-  }
-
-  if (
-    !compareHash({ originalText: code, hashedText: await get(otpKey(email)) })
-  ) {
-    throw new Error("invalid otp", { cause: 400 });
-  }
-
-  await db_service.findOneAndUpdate({
-    model: userModel,
-    filter: { email },
-    updates: { $set: { password: applyHash({ originalText: newPassword }) } },
-  });
-
-  successResponse({ res, message: "password was reset successfully" });
-};
-
-export const resendOTPResetPassword = async (req, res, next) => {
-  const { email } = req.body;
   const user = await db_service.findOne({
     model: userModel,
-    filter: { email },
+    filter: {
+      email,
+      provider: providerEnum.system,
+      isVerified: true,
+    },
   });
+
   if (!user) {
-    throw new Error("user not found", { cause: 404 });
+    throw new Error("user not found or invalid provider or not verified", {
+      cause: 404,
+    });
   }
 
   const isBlocked = await ttl(blockOtpKey(email));
@@ -567,13 +533,11 @@ export const resendOTPResetPassword = async (req, res, next) => {
     );
   }
 
-  if ((await ttl(otpKey(email))) > 0) {
-    throw new Error(
-      `you can resend otp after ${await ttl(otpKey(email))} seconds`,
-      {
-        cause: 400,
-      },
-    );
+  const otpTtl = await ttl(otpKey(email));
+  if (otpTtl > 0) {
+    throw new Error(`you can resend otp after ${otpTtl} seconds`, {
+      cause: 400,
+    });
   }
 
   const maxOtp = await get(maxOtpKey(email));
@@ -586,6 +550,7 @@ export const resendOTPResetPassword = async (req, res, next) => {
     await update({
       key: maxOtpKey(email),
       value: 0,
+      ttl: 30,
     });
     throw new Error("you have exceeded the maximum number of tries", {
       cause: 400,
@@ -593,14 +558,53 @@ export const resendOTPResetPassword = async (req, res, next) => {
   }
 
   const otp = generateOTP();
-  await sendOTP({ email, otp });
-  await set({
-    key: otpKey(email),
-    value: applyHash({ originalText: otp }),
-    ttl: 60 * 2,
+
+  event.emit(emailEnum.forgetPassword, async () => {
+    await sendOTP({ email, otp });
+
+    await set({
+      key: otpKey(email),
+      value: applyHash({ originalText: `${otp}` }),
+      ttl: 60 * 2,
+    });
+
+    await incr(maxOtpKey(email));
   });
-  await incr(maxOtpKey(email));
-  successResponse({ res, message: "OTP sent to your gmail" });
+
+  successResponse({ res, message: "otp sent to your email" });
+};
+
+export const resetPassword = async (req, res, next) => {
+  const { code, email, newPassword } = req.body;
+
+  if (!((await ttl(otpKey(email))) > 0)) {
+    throw new Error("otp expired", { cause: 400 });
+  }
+
+  if (
+    !compareHash({ originalText: code, hashedText: await get(otpKey(email)) })
+  ) {
+    throw new Error("invalid otp", { cause: 400 });
+  }
+
+  const user = await db_service.findOneAndUpdate({
+    model: userModel,
+    filter: { email, provider: providerEnum.system, isVerified: true },
+    updates: {
+      password: applyHash({ originalText: newPassword }),
+      changeCredential: new Date(),
+    },
+  });
+
+  if (!user) {
+    throw new Error("user not found or invalid provider or not verified", {
+      cause: 404,
+    });
+  }
+
+  await deleteKey(otpKey(email));
+
+  successResponse({ res, message: "password was reset successfully" });
 };
 
 export const logout = async (req, res, next) => {

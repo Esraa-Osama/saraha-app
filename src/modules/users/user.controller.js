@@ -1,4 +1,4 @@
-//~ Assignment 13 ~//
+//~ Assignment 14 ~//
 
 import { Router } from "express";
 import {
@@ -19,7 +19,6 @@ import {
   profileVisitCount,
   forgotPassword,
   resetPassword,
-  resendOTPResetPassword,
 } from "./user.service.js";
 import { authentication } from "../../common/middleware/authentication.middleware.js";
 import { authorization } from "../../common/middleware/authorization.middleware.js";
@@ -42,7 +41,7 @@ import {
   multerHost,
 } from "../../common/middleware/multer.middleware.js";
 import { multerEnum } from "../../common/enums/multer.enum.js";
-const userRouter = Router();
+const userRouter = Router({ caseSensitive: true, strict: true });
 
 userRouter.post(
   "/signup",
@@ -135,8 +134,6 @@ userRouter.post(
   validation(resetPasswordSchema),
   resetPassword,
 );
-
-userRouter.post("/resendOTPResetPassword", resendOTPResetPassword);
 
 userRouter.post("/logout", authentication, logout);
 

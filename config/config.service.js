@@ -1,4 +1,4 @@
-//~ Assignment 13 ~//
+//~ Assignment 14 ~//
 
 import { resolve } from "path";
 import dotenv from "dotenv";
@@ -29,3 +29,4 @@ export const CLOUD_NAME = process.env.CLOUD_NAME;
 export const API_KEY = process.env.API_KEY;
 export const API_SECRET = process.env.API_SECRET;
 export const REDIS_URL = process.env.REDIS_URL;
+export const WHITE_LIST = process.env.WHITE_LIST?.split(",") || [];
